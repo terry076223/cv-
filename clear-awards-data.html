@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>清除舊獎狀數據 | CV Prototype</title>
+  <style>
+    body {
+      font-family: "Noto Sans TC", system-ui, -apple-system, sans-serif;
+      background: #060608;
+      color: #e5e7eb;
+      padding: 40px;
+      text-align: center;
+    }
+    .container {
+      max-width: 400px;
+      margin: 0 auto;
+      background: #0c0f1a;
+      border: 1px solid #1f2637;
+      border-radius: 16px;
+      padding: 32px;
+    }
+    h1 { margin-bottom: 24px; }
+    .warning {
+      background: rgba(250, 211, 207, 0.1);
+      border: 1px solid rgba(250, 211, 207, 0.3);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 24px;
+      color: #fad3cf;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    button {
+      display: inline-block;
+      padding: 10px 24px;
+      margin: 8px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .btn-danger {
+      background: #dc2626;
+      color: white;
+    }
+    .btn-danger:hover {
+      background: #b91c1c;
+    }
+    .btn-secondary {
+      background: #1f2637;
+      color: #e5e7eb;
+      border: 1px solid #374151;
+    }
+    .btn-secondary:hover {
+      background: #2d3748;
+    }
+    .success {
+      color: #86efac;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>清除舊獎狀數據</h1>
+    <div class="warning">
+      ⚠️ 此操作將清除所有舊的獎狀數據（沒有照片字段的獎狀）。<br><br>
+      清除後，你需要重新在後台添加獎狀並上傳照片。
+    </div>
+    <button class="btn-danger" onclick="clearOldAwards()">清除舊獎狀數據</button>
+    <button class="btn-secondary" onclick="goToAdmin()">返回後台</button>
+    <div id="message"></div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'cvData';
+
+    function clearOldAwards() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) {
+          showMessage('目前沒有數據。', 'error');
+          return;
+        }
+
+        const data = JSON.parse(raw);
+        
+        // 檢查並清除沒有 photoBase64 的獎狀
+        if (Array.isArray(data.awards)) {
+          const hasPhotos = data.awards.some(a => a.photoBase64);
+          data.awards = [];
+          
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+          
+          if (hasPhotos) {
+            showMessage('✓ 已清除舊獎狀數據。\n現在你可以回到後台重新添加獎狀並上傳照片。', 'success');
+          } else {
+            showMessage('✓ 獎狀列表已清空。\n你可以回到後台添加新的獎狀。', 'success');
+          }
+        }
+      } catch (err) {
+        console.error('Error:', err);
+        showMessage('錯誤: ' + err.message, 'error');
+      }
+    }
+
+    function goToAdmin() {
+      window.location.href = './admin.html';
+    }
+
+    function showMessage(text, type) {
+      const messageDiv = document.getElementById('message');
+      messageDiv.style.marginTop = '16px';
+      messageDiv.style.color = type === 'success' ? '#86efac' : '#ef4444';
+      messageDiv.style.whiteSpace = 'pre-wrap';
+      messageDiv.textContent = text;
+    }
+  </script>
+</body>
+</html>

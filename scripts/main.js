@@ -1,0 +1,252 @@
+// Frontstage renderer powered by localStorage; seeds prototype data on first load.
+const STORAGE_KEY = 'cvData';
+
+const defaultData = {
+  profile: {
+    name: '劉昱宏',
+    title: '數據分析師（具前後端協作能力）',
+    intro: '東海大學統計研究所畢，熟悉 Python / SAS / R，具備前端 Angular 與後端 Spring Boot 協作與資料流設計能力。',
+    location: 'Taiwan',
+    email: 'contact@example.com',
+    phone: '+886-900-000-000',
+    links: [
+      { label: 'GitHub', href: 'https://github.com/', icon: 'fa-brands fa-github' },
+      { label: 'LinkedIn', href: 'https://www.linkedin.com', icon: 'fa-brands fa-linkedin' }
+    ]
+  },
+  skills: [
+    { id: crypto.randomUUID(), name: '資料分析', items: [{ name: 'Python（Pandas/NumPy）', level: '熟練' }, { name: 'SAS', level: '剛接觸' }, { name: 'R', level: '入門' }, { name: '統計建模', level: '進階' }] },
+    { id: crypto.randomUUID(), name: '前端協作', items: [{ name: 'Angular', level: '入門' }, { name: 'RWD / CSS3', level: '進階' }, { name: 'UI/UX 觀念', level: '入門' }] },
+    { id: crypto.randomUUID(), name: '後端協作', items: [{ name: 'Spring Boot', level: '入門' }, { name: 'RESTful API', level: '入門' }, { name: '資料流與介接設計', level: '進階' }] }
+  ],
+  experience: [
+    { id: crypto.randomUUID(), type: 'Work', company: '中山醫學大學', role: '資料分析相關', period: '1 年', summary: '參與醫學資料分析與研究支援。' },
+    { id: crypto.randomUUID(), type: 'Work', company: '雲林科技大學', role: '資料分析相關', period: '4 年', summary: '學術資料處理、研究數據建模與分析。' },
+    { id: crypto.randomUUID(), type: 'Work', company: '精誠集團子公司台灣資服（TIST）', role: '數據分析師', period: '3 年', summary: '企業資料分析、報表與系統協作，與前後端團隊協作。' },
+    { id: crypto.randomUUID(), type: 'Education', company: '東海大學統計研究所', role: '碩士', period: '最高學歷', summary: '統計理論與應用、資料分析方法。' }
+  ],
+  achievements: [],
+  courses: [],
+  certificates: [],
+  awards: [],
+  projects: []
+};
+
+function loadData() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultData));
+    return structuredClone(defaultData);
+  }
+  try {
+    const parsed = JSON.parse(raw);
+    migrateAchievements(parsed);
+    return parsed;
+  } catch (err) {
+    console.error('Failed to parse cv data, resetting.', err);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultData));
+    return structuredClone(defaultData);
+  }
+}
+
+function migrateAchievements(data) {
+  if (!data) return;
+  if (!Array.isArray(data.courses)) data.courses = [];
+  if (!Array.isArray(data.certificates)) data.certificates = [];
+  if (!Array.isArray(data.awards)) data.awards = [];
+  if (Array.isArray(data.achievements) && data.achievements.length) {
+    data.achievements.forEach(item => {
+      const copy = { ...item, id: item.id || crypto.randomUUID() };
+      const t = (item.type || '').toLowerCase();
+      if (t.includes('課程')) data.courses.push(copy);
+      else if (t.includes('證照')) data.certificates.push(copy);
+      else if (t.includes('獎') || t.includes('award')) data.awards.push(copy);
+      else data.courses.push(copy);
+    });
+    data.achievements = [];
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }
+}
+
+function renderProfile(data) {
+  const { profile } = data;
+  document.getElementById('hero-name').textContent = profile.name;
+  document.getElementById('hero-title').textContent = profile.title;
+  document.getElementById('hero-intro').textContent = profile.intro;
+  const avatar = document.getElementById('hero-avatar');
+  if (avatar) {
+    if (profile.avatarBase64) {
+      avatar.src = profile.avatarBase64;
+    } else {
+      avatar.src = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><rect width='100%' height='100%' fill='#0a0d18'/><circle cx='120' cy='90' r='50' fill='#2470a0'/><rect x='60' y='150' width='120' height='50' rx='25' fill='#a696c8'/></svg>`);
+    }
+  }
+
+  const meta = document.getElementById('hero-meta');
+  meta.innerHTML = '';
+  [profile.location, profile.email, profile.phone]
+    .filter(Boolean)
+    .forEach(item => {
+      const span = document.createElement('span');
+      span.className = 'badge';
+      span.textContent = item;
+      meta.appendChild(span);
+    });
+
+  const about = document.getElementById('about-content');
+  about.innerHTML = `
+    <h3>${profile.title}</h3>
+    <p>${profile.intro}</p>
+    <div class="links">
+      ${profile.links.map(link => `<a href="${link.href}" target="_blank"><i class="${link.icon}"></i> ${link.label}</a>`).join('')}
+    </div>
+  `;
+}
+
+function renderSkills(data) {
+  const grid = document.getElementById('skills-grid');
+  grid.innerHTML = '';
+  data.skills.forEach(skill => {
+    const card = document.createElement('div');
+    card.className = 'card skill-card';
+    const toScore = (lvl) => {
+      const map = {
+        '剛接觸': 1,
+        '入門': 2,
+        '進階': 4,
+        '熟練': 5
+      };
+      if (!lvl) return 0;
+      return map[lvl] ?? 3; // default 中間值
+    };
+    const meterHtml = (score) => {
+      const cells = Array.from({ length: 5 }, (_, i) => `<span class=\"level-cell${i < score ? ' filled' : ''}\"></span>`).join('');
+      return `<span class=\"level-meter\">${cells}</span>`;
+    };
+    const itemsHtml = (skill.items || []).map(item => {
+      const levelBadge = item.level ? `<span class=\"badge\">${item.level}</span>` : '';
+      const score = toScore(item.level);
+      return `<li class=\"skill-item\">${item.name} ${levelBadge} ${meterHtml(score)}</li>`;
+    }).join('');
+    card.innerHTML = `
+      <h3>${skill.name}</h3>
+      <ul>${itemsHtml}</ul>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function renderExperience(data) {
+  const workWrap = document.getElementById('work-timeline');
+  const eduWrap = document.getElementById('education-timeline');
+  if (workWrap) workWrap.innerHTML = '';
+  if (eduWrap) eduWrap.innerHTML = '';
+
+  const workItems = (data.experience || []).filter(i => (i.type || '').toLowerCase() === 'work');
+  const eduItems = (data.experience || []).filter(i => (i.type || '').toLowerCase() === 'education');
+
+  workItems.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'timeline-item';
+    div.innerHTML = `
+      <div class="badge">工作</div>
+      <h3>${item.company} — ${item.role}</h3>
+      <p class="text-muted">${item.period}</p>
+      <p>${item.summary}</p>
+    `;
+    if (workWrap) workWrap.appendChild(div);
+  });
+
+  eduItems.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'timeline-item';
+    div.innerHTML = `
+      <div class="badge">學歷</div>
+      <h3>${item.company} — ${item.role}</h3>
+      <p class="text-muted">${item.period}</p>
+      <p>${item.summary}</p>
+    `;
+    if (eduWrap) eduWrap.appendChild(div);
+  });
+}
+
+function renderGrouped(list, targetId, badgeLabel) {
+  const grid = document.getElementById(targetId);
+  if (!grid) return;
+  grid.innerHTML = '';
+  list.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    
+    // 若該項目有照片，顯示圖片版本（適用課程/證照/獎狀）
+    if (item.photoBase64) {
+      const linkHtml = item.link ? `<a href="${item.link}" target="_blank">查看</a>` : '';
+      card.classList.add('award-card-with-photo');
+      card.innerHTML = `
+        <div class="badge">${badgeLabel}</div>
+        <img src="${item.photoBase64}" class="award-photo" />
+        <h3>${item.name}</h3>
+        <p class="text-muted">${item.issuer || ''}${item.year ? ' · ' + item.year : ''}</p>
+        <p>${item.desc || ''}</p>
+        ${linkHtml}
+      `;
+    } else {
+      // 預設卡片版本
+      const linkHtml = item.link ? `<a href="${item.link}" target="_blank">查看</a>` : '';
+      card.innerHTML = `
+        <div class="badge">${badgeLabel}</div>
+        <h3>${item.name}</h3>
+        <p class="text-muted">${item.issuer || ''}${item.year ? ' · ' + item.year : ''}</p>
+        <p>${item.desc || ''}</p>
+        ${linkHtml}
+      `;
+    }
+    grid.appendChild(card);
+  });
+}
+
+function renderProjects(data) {
+  const grid = document.getElementById('projects-grid');
+  grid.innerHTML = '';
+  data.projects.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'card project';
+    const linkHtml = item.link ? `<a class="btn ghost" href="${item.link}" target="_blank">前往</a>` : '';
+    card.innerHTML = `
+      <h3>${item.name}</h3>
+      <p>${item.desc}</p>
+      <div class="tags">${item.tech.split('/').map(tag => `<span>${tag.trim()}</span>`).join('')}</div>
+      ${linkHtml}
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function renderContact(data) {
+  const card = document.getElementById('contact-card');
+  const profile = data.profile;
+  card.innerHTML = `
+    <div class="card">
+      <p><i class="fa-solid fa-location-dot"></i> ${profile.location}</p>
+      <p><i class="fa-solid fa-envelope"></i> ${profile.email}</p>
+      <p><i class="fa-solid fa-phone"></i> ${profile.phone}</p>
+      <div class="links">
+        ${profile.links.map(link => `<a href="${link.href}" target="_blank"><i class="${link.icon}"></i> ${link.label}</a>`).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderAll() {
+  const data = loadData();
+  renderProfile(data);
+  renderSkills(data);
+  renderExperience(data);
+  renderGrouped(data.courses || [], 'courses-grid', '課程');
+  renderGrouped(data.certificates || [], 'certificates-grid', '證照');
+  renderGrouped(data.awards || [], 'awards-grid', '獎狀');
+  renderProjects(data);
+  renderContact(data);
+}
+
+renderAll();

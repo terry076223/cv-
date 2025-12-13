@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>個人履歷展示 | 前台</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-pb3VM2CO9sPeFm3N1T2nrvMx0s0wY8dq7Tjrvf7fPyMWj5D0wQx5QdRffzA2hY0vNnOqVqN5lrE6YCsQGFhDWg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="./styles/styles.css" />
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <header class="hero" id="top">
+    <nav class="nav">
+      <div class="logo">CV<span>Lab</span></div>
+      <ul class="nav-links">
+        <li><a href="#about">關於我</a></li>
+        <li><a href="#skills">技能</a></li>
+        <li><a href="#experience">經歷</a></li>
+        <li><a href="#achievements">課程/證照</a></li>
+        <li><a href="#projects">作品</a></li>
+        <li><a href="#contact">聯絡</a></li>
+        <li><a class="admin-link" href="./login.html">後台</a></li>
+      </ul>
+    </nav>
+    <div class="hero-content">
+      <div class="hero-text">
+        <p class="eyebrow">Tech Resume Prototype</p>
+        <h1 id="hero-name">Your Name</h1>
+        <p class="subtitle" id="hero-title">Fullstack Engineer</p>
+        <p class="intro" id="hero-intro">前台內容由 localStorage 動態讀取，示範資料在首次載入時自動建立。</p>
+        <div class="hero-actions">
+          <a class="btn primary" href="#projects">查看作品</a>
+          <a class="btn ghost" href="#contact">聯絡我</a>
+        </div>
+        <div class="hero-meta" id="hero-meta"></div>
+      </div>
+      <div class="hero-visual">
+        <img id="hero-avatar" class="avatar" alt="avatar" />
+        <div class="card-stack">
+          <div class="mini-card">Data</div>
+          <div class="mini-card">RWD</div>
+          <div class="mini-card">UI</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section id="about" class="section">
+      <div class="section-heading">
+        <p class="eyebrow">About</p>
+        <h2>關於我</h2>
+      </div>
+      <div class="card" id="about-content"></div>
+    </section>
+
+    <section id="skills" class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Skills</p>
+        <h2>技能樹</h2>
+      </div>
+      <div class="skills-grid" id="skills-grid"></div>
+    </section>
+
+    <section id="experience" class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Experience</p>
+        <h2>學歷與工作經歷</h2>
+      </div>
+      <h3>工作經歷</h3>
+      <div class="timeline" id="work-timeline"></div>
+      <h3>學歷</h3>
+      <div class="timeline" id="education-timeline"></div>
+    </section>
+
+    <section id="achievements" class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Achievements</p>
+        <h2>課程 / 證照 / 獎狀</h2>
+      </div>
+      <h3>課程</h3>
+      <div class="grid" id="courses-grid"></div>
+      <h3>證照</h3>
+      <div class="grid" id="certificates-grid"></div>
+      <h3>獎狀 / 競賽</h3>
+      <div class="grid" id="awards-grid"></div>
+    </section>
+
+    <section id="projects" class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Projects</p>
+        <h2>作品展示</h2>
+      </div>
+      <div class="grid" id="projects-grid"></div>
+    </section>
+
+    <section id="contact" class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Contact</p>
+        <h2>聯絡方式</h2>
+      </div>
+      <div class="contact" id="contact-card"></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div>© 2025 劉昱宏</div>
+    <div class="footer-built">Built with HTML &amp; CSS</div>
+    <a href="./login.html" class="admin-link footer-admin-link">進入後台</a>
+  </footer>
+
+  <script type="module" src="./scripts/main.js"></script>
+</body>
+</html>
