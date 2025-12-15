@@ -241,6 +241,10 @@ function renderGrouped(list, targetId, badgeLabel) {
       if (typeof photoSrc === 'string' && photoSrc.startsWith('assets/images/')) {
         photoSrc = `https://cdn.jsdelivr.net/gh/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}@${GITHUB_BRANCH}/${photoSrc}`;
       }
+      // Cache-busting to avoid stale CDN images in incognito/Edge
+      if (typeof photoSrc === 'string' && photoSrc.startsWith('https://cdn.jsdelivr.net/')) {
+        photoSrc = `${photoSrc}?t=${Date.now()}`;
+      }
       const linkHtml = item.link ? `<a href="${item.link}" target="_blank">查看</a>` : '';
       card.classList.add('award-card-with-photo');
       card.innerHTML = `
