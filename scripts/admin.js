@@ -183,12 +183,6 @@ function upsertCert(event) {
   event.preventDefault();
   const data = loadData();
   const id = document.getElementById('cert-id').value || crypto.randomUUID();
-  const certPreview = document.getElementById('cert-photo-preview');
-  let certPhotoBase64 = certPreview?.dataset?.photoBase64 || '';
-  if (!certPhotoBase64) {
-    const img = certPreview ? certPreview.querySelector('img') : null;
-    if (img && img.src) certPhotoBase64 = img.src;
-  }
   const payload = {
     id,
     name: document.getElementById('cert-name').value.trim(),
@@ -196,7 +190,7 @@ function upsertCert(event) {
     year: document.getElementById('cert-year').value.trim(),
     link: document.getElementById('cert-link').value.trim(),
     desc: document.getElementById('cert-desc').value.trim(),
-    photoBase64: certPhotoBase64
+    photoPath: document.getElementById('cert-photo-path')?.value.trim() || ''
   };
   if (!Array.isArray(data.certificates)) data.certificates = [];
   const idx = data.certificates.findIndex(i => i.id === id);
@@ -243,12 +237,6 @@ function upsertCourse(event) {
   event.preventDefault();
   const data = loadData();
   const id = document.getElementById('course-id').value || crypto.randomUUID();
-  const coursePreview = document.getElementById('course-photo-preview');
-  let coursePhotoBase64 = coursePreview?.dataset?.photoBase64 || '';
-  if (!coursePhotoBase64) {
-    const img = coursePreview ? coursePreview.querySelector('img') : null;
-    if (img && img.src) coursePhotoBase64 = img.src;
-  }
   const payload = {
     id,
     name: document.getElementById('course-name').value.trim(),
@@ -256,7 +244,7 @@ function upsertCourse(event) {
     year: document.getElementById('course-year').value.trim(),
     link: document.getElementById('course-link').value.trim(),
     desc: document.getElementById('course-desc').value.trim(),
-    photoBase64: coursePhotoBase64
+    photoPath: document.getElementById('course-photo-path')?.value.trim() || ''
   };
   if (!Array.isArray(data.courses)) data.courses = [];
   const idx = data.courses.findIndex(i => i.id === id);
@@ -303,12 +291,6 @@ function upsertAward(event) {
   event.preventDefault();
   const data = loadData();
   const id = document.getElementById('award-id').value || crypto.randomUUID();
-  const preview = document.getElementById('award-photo-preview');
-  let photoBase64 = preview?.dataset?.photoBase64 || '';
-  if (!photoBase64) {
-    const img = preview ? preview.querySelector('img') : null;
-    if (img && img.src) photoBase64 = img.src;
-  }
   const payload = {
     id,
     name: document.getElementById('award-name').value.trim(),
@@ -316,7 +298,7 @@ function upsertAward(event) {
     year: document.getElementById('award-year').value.trim(),
     link: document.getElementById('award-link').value.trim(),
     desc: document.getElementById('award-desc').value.trim(),
-    photoBase64: photoBase64
+    photoPath: document.getElementById('award-photo-path')?.value.trim() || ''
   };
   if (!Array.isArray(data.awards)) data.awards = [];
   const idx = data.awards.findIndex(i => i.id === id);

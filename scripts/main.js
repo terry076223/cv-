@@ -189,13 +189,14 @@ function renderGrouped(list, targetId, badgeLabel) {
     const card = document.createElement('div');
     card.className = 'card';
     
-    // 若該項目有照片，顯示圖片版本（適用課程/證照/獎狀）
-    if (item.photoBase64) {
+    // 若該項目有照片路徑或 base64，顯示圖片版本（適用課程/證照/獎狀）
+    if (item.photoPath || item.photoBase64) {
+      const photoSrc = item.photoPath || item.photoBase64;
       const linkHtml = item.link ? `<a href="${item.link}" target="_blank">查看</a>` : '';
       card.classList.add('award-card-with-photo');
       card.innerHTML = `
         <div class="badge">${badgeLabel}</div>
-        <img src="${item.photoBase64}" class="award-photo" />
+        <img src="${photoSrc}" class="award-photo" />
         <h3>${item.name}</h3>
         <p class="text-muted">${item.issuer || ''}${item.year ? ' · ' + item.year : ''}</p>
         <p>${item.desc || ''}</p>
