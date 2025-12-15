@@ -12,6 +12,13 @@ const THEME_LABELS = {
   purple: '紫夢'
 };
 
+// GitHub 配置
+const GITHUB_REPO_OWNER = 'terry076223';
+const GITHUB_REPO_NAME = 'cv-';
+const GITHUB_BRANCH = 'main';
+const CV_DATA_FILE = 'cv-data.json';
+const GITHUB_TOKEN_KEY = 'cvGitHubToken';
+
 const defaultData = {
   profile: {
     name: '劉昱宏',
@@ -57,6 +64,38 @@ function loadData() {
     console.error('Failed to parse cv data, resetting.', err);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultData));
     return structuredClone(defaultData);
+  }
+}
+
+function getGitHubToken() {
+  return localStorage.getItem(GITHUB_TOKEN_KEY) || '';
+}
+
+async function loadDataFromGitHub() {
+  const token = getGitHubToken();
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const url = `https://api.github.com/repos/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/contents/${CV_DATA_FILE}`;
+    const response = await fetch(url, {
+      headers: {
+        'Authorization': `token ${token}`,
+        'Accept': 'application/vnd.github.v3.raw'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('✅ Loaded cvData from GitHub');
+    return data;
+  } catch (error) {
+    console.warn('⚠️ Failed to load from GitHub:', error.message);
+    return null;
   }
 }
 
@@ -328,6 +367,38 @@ function renderAll() {
   renderGrouped(data.awards || [], 'awards-grid', '獎狀');
   renderProjects(data);
   renderContact(data);
+}
+
+// 在頁面載入時從 GitHub 同步資料
+async function syncDataFromGitHub() {
+  try {
+    const gitHubData = await loadDataFromGitHub();
+    if (gitHubData) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(gitHubData));
+      console.log('✅ Synced data from GitHub');
+      // 重新渲染 UI
+      renderAll();
+    }
+  } catch (err) {
+    console.warn('GitHub sync skipped:', err.message);
+  }
+}
+
+// 初始化
+document.addEventListener('DOMContentLoaded', () => {
+  renderAll();
+  applyTheme();
+  setupContactForm();
+  // 非同步從 GitHub 同步資料
+  syncDataFromGitHub();
+});
+
+// 如果頁面已加載時才執行 DOMContentLoaded 沒觸發
+if (document.readyState !== 'loading') {
+  renderAll();
+  applyTheme();
+  setupContactForm();
+  syncDataFromGitHub();
 }
 
 function applyTheme(theme) {

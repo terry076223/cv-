@@ -1,8 +1,9 @@
-// GitHub API Image Uploader
+// GitHub API Image Uploader & Data Sync
 const GITHUB_REPO_OWNER = 'terry076223'; // 你的 GitHub 使用者名稱
 const GITHUB_REPO_NAME = 'cv-'; // 你的 repo 名稱
 const GITHUB_BRANCH = 'main';
 const GITHUB_TOKEN_KEY = 'cvGitHubToken';
+const CV_DATA_FILE = 'cv-data.json';
 
 function getGitHubToken() {
   return localStorage.getItem(GITHUB_TOKEN_KEY) || '';
@@ -62,6 +63,87 @@ async function uploadImageToGitHub(file, onProgress) {
     reader.onerror = () => reject(new Error('讀取檔案失敗'));
     reader.readAsDataURL(file);
   });
+}
+
+// GitHub 資料同步函數
+async function loadDataFromGitHub() {
+  const token = getGitHubToken();
+  if (!token) {
+    console.log('No GitHub token, using localStorage fallback');
+    return null;
+  }
+
+  try {
+    const url = `https://api.github.com/repos/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/contents/${CV_DATA_FILE}`;
+    const response = await fetch(url, {
+      headers: {
+        'Authorization': `token ${token}`,
+        'Accept': 'application/vnd.github.v3.raw'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('✅ Loaded cvData from GitHub');
+    return data;
+  } catch (error) {
+    console.warn('⚠️ Failed to load from GitHub:', error.message);
+    return null;
+  }
+}
+
+async function saveDataToGitHub(data) {
+  const token = getGitHubToken();
+  if (!token) {
+    throw new Error('請先設定 GitHub Token');
+  }
+
+  try {
+    // 先取得目前檔案的 SHA（用於更新）
+    const url = `https://api.github.com/repos/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/contents/${CV_DATA_FILE}`;
+    const getResponse = await fetch(url, {
+      headers: {
+        'Authorization': `token ${token}`,
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    });
+
+    let sha = '';
+    if (getResponse.ok) {
+      const existing = await getResponse.json();
+      sha = existing.sha;
+    }
+
+    // 上傳更新的 JSON
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
+    const putResponse = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: `Update CV data: ${new Date().toLocaleString('zh-TW')}`,
+        content: content,
+        branch: GITHUB_BRANCH,
+        ...(sha ? { sha } : {})
+      })
+    });
+
+    if (!putResponse.ok) {
+      const error = await putResponse.json();
+      throw new Error(error.message || '儲存失敗');
+    }
+
+    console.log('✅ Saved cvData to GitHub');
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to save to GitHub:', error);
+    throw error;
+  }
 }
 
 function showUploadProgress(buttonId, message) {

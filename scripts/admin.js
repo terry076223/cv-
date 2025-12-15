@@ -36,6 +36,7 @@ const defaultData = {
 };
 
 function loadData() {
+  // 會在 bootstrap 時非同步從 GitHub 載入
   const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultData));
@@ -52,27 +53,17 @@ function loadData() {
   }
 }
 
-function migrateAchievements(data) {
-  if (!data) return;
-  if (!Array.isArray(data.courses)) data.courses = [];
-  if (!Array.isArray(data.certificates)) data.certificates = [];
-  if (!Array.isArray(data.awards)) data.awards = [];
-  if (Array.isArray(data.achievements) && data.achievements.length) {
-    data.achievements.forEach(item => {
-      const copy = { ...item, id: item.id || crypto.randomUUID() };
-      const t = (item.type || '').toLowerCase();
-      if (t.includes('課程')) data.courses.push(copy);
-      else if (t.includes('證照')) data.certificates.push(copy);
-      else if (t.includes('獎') || t.includes('award')) data.awards.push(copy);
-      else data.courses.push(copy);
-    });
-    data.achievements = [];
-    saveData(data);
-  }
-}
-
 function saveData(data) {
+  // 同時儲存到 localStorage 和 GitHub
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  
+  // 非同步上傳到 GitHub（不阻斷 UI）
+  if (window.saveDataToGitHub) {
+    saveDataToGitHub(data).catch(err => {
+      console.error('Warning: GitHub save failed (but localStorage saved):', err);
+      // 不顯示錯誤，因為 localStorage 已成功保存
+    });
+  }
 }
 
 function isLoggedIn() {
@@ -756,9 +747,30 @@ function bootstrap() {
     attachSkillHandlers();
     preloadProfileForm();
     refreshUI();
+
+    // 從 GitHub 載入最新資料（非同步）
+    syncDataFromGitHub();
   } catch (err) {
     console.error('Bootstrap error', err);
     alert('後台載入時發生錯誤，請重新整理或清除瀏覽器快取。');
+  }
+}
+
+async function syncDataFromGitHub() {
+  try {
+    // 如果有設定 Token，試著從 GitHub 載入最新資料
+    const gitHubData = await loadDataFromGitHub();
+    if (gitHubData) {
+      // 用 GitHub 資料取代 localStorage
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(gitHubData));
+      console.log('✅ Synced data from GitHub');
+      // 重新整理 UI
+      refreshUI();
+      preloadProfileForm();
+    }
+  } catch (err) {
+    console.warn('GitHub sync skipped:', err.message);
+    // 失敗時使用 localStorage 的資料，不中斷使用者操作
   }
 }
 
