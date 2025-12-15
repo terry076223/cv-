@@ -538,17 +538,26 @@ function handlePasswordChange(event) {
   document.getElementById('password-form').reset();
 }
 
-function handleAvatarUpload(event) {
+async function handleAvatarUpload(event) {
   const file = event.target.files?.[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
+  try {
+    // Upload to GitHub and get CDN URL
+    const cdnUrl = await uploadImageToGitHub(file);
     const data = loadData();
-    data.profile.avatarBase64 = reader.result; // store base64 for prototype
+    data.profile.avatarPath = cdnUrl; // store CDN URL for cross-device visibility
+    // Cleanup legacy base64 to reduce size
+    if (data.profile.avatarBase64) delete data.profile.avatarBase64;
     saveData(data);
     updateStats();
-  };
-  reader.readAsDataURL(file);
+    alert('大頭貼已上傳並儲存，前台將顯示 CDN 連結。');
+  } catch (err) {
+    console.error('Avatar upload failed', err);
+    alert(`上傳失敗：${err.message || err}`);
+  } finally {
+    // Reset input value so same file can be re-selected
+    event.target.value = '';
+  }
 }
 
 function upsertSkill(event) {

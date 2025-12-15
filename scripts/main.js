@@ -131,7 +131,16 @@ function renderProfile(data) {
   document.getElementById('hero-intro').textContent = profile.intro;
   const avatar = document.getElementById('hero-avatar');
   if (avatar) {
-    if (profile.avatarBase64) {
+    if (profile.avatarPath) {
+      let src = profile.avatarPath;
+      if (src.startsWith('assets/images/')) {
+        src = `https://cdn.jsdelivr.net/gh/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}@${GITHUB_BRANCH}/${src}`;
+      }
+      if (src.startsWith('https://cdn.jsdelivr.net/')) {
+        src = `${src}?t=${Date.now()}`; // cache-busting
+      }
+      avatar.src = src;
+    } else if (profile.avatarBase64) {
       avatar.src = profile.avatarBase64;
     } else {
       avatar.src = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><rect width='100%' height='100%' fill='#0a0d18'/><circle cx='120' cy='90' r='50' fill='#2470a0'/><rect x='60' y='150' width='120' height='50' rx='25' fill='#a696c8'/></svg>`);
